@@ -142,9 +142,9 @@ namespace Obsidian.Preview
 
         private void HandleDDS(WADEntry entry, string namePath)
         {
-            if (this.Mode == PreviewHandlerMode.TexturePreview)
+            if (this.Mode == PreviewHandlerMode.MeshPreview)
             {
-                this.Mode = PreviewHandlerMode.MeshPreview;
+                this.Mode = PreviewHandlerMode.TexturePreview;
                 this.Viewport.Visibility = Visibility.Collapsed;
                 this.PreviewImage.Visibility = Visibility.Visible;
                 this.PreviewTextureComboBox.IsEnabled = false;
@@ -224,9 +224,9 @@ namespace Obsidian.Preview
                 return;
             }
 
-            if (this.Mode == PreviewHandlerMode.MeshPreview)
+            if (this.Mode == PreviewHandlerMode.TexturePreview)
             {
-                this.Mode = PreviewHandlerMode.TexturePreview;
+                this.Mode = PreviewHandlerMode.MeshPreview;
                 this.PreviewImage.Visibility = Visibility.Collapsed;
                 this.Viewport.Visibility = Visibility.Visible;
             }
@@ -616,7 +616,7 @@ namespace Obsidian.Preview
 
     public enum PreviewHandlerMode
     {
-        TexturePreview,
-        MeshPreview
+        MeshPreview,
+        TexturePreview
     }
 }
