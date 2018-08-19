@@ -36,7 +36,7 @@ namespace Obsidian.Utils
 
                     if (bin != null)
                     {
-                        strings.AddRange(ProcessBINLinkedFiles(bin.LinkedFiles));
+                        strings.AddRange(ProcessBINLinkedFiles(bin.LinkedFiles, logger));
                         strings = strings.Distinct().ToList();
 
                         strings.AddRange(ProcessBINFile(bin));
@@ -53,7 +53,7 @@ namespace Obsidian.Utils
                     {
                         ulong hash = BitConverter.ToUInt64(xxHash.ComputeHash(Encoding.ASCII.GetBytes(fetchedString.ToLower())), 0);
 
-                        if (!stringDictionary.ContainsKey(hash))
+                        if (!stringDictionary.ContainsKey(hash) && (wad.Entries.ToList().Find(x => x.XXHash == hash) != null))
                         {
                             stringDictionary.Add(hash, fetchedString);
                         }
@@ -92,7 +92,15 @@ namespace Obsidian.Utils
 
             if (value.Type == BINFileValueType.String)
             {
-                strings.Add(value.Value as string);
+                string valueString = value.Value as string;
+                strings.Add(valueString);
+                
+                if(valueString.EndsWith(".dds", StringComparison.OrdinalIgnoreCase))
+                {
+                    int lastIndex = valueString.LastIndexOf('/');
+                    strings.Add(valueString.Insert(lastIndex + 1, "2x_"));
+                    strings.Add(valueString.Insert(lastIndex + 1, "4x_"));
+                }
             }
             else if (value.Type == BINFileValueType.AdditionalOptionalData)
             {
@@ -163,7 +171,7 @@ namespace Obsidian.Utils
             return strings.AsEnumerable();
         }
 
-        private static IEnumerable<string> ProcessBINLinkedFiles(List<string> linkedFiles)
+        private static IEnumerable<string> ProcessBINLinkedFiles(List<string> linkedFiles, ILog logger)
         {
             List<string> strings = new List<string>();
 
@@ -177,17 +185,19 @@ namespace Obsidian.Utils
                 }
                 else
                 {
-                    strings.AddRange(ProcessBINPackedLinkedFile(fetchedString));
+                    strings.AddRange(ProcessBINPackedLinkedFile(fetchedString, logger));
                 }
             }
 
             return strings.AsEnumerable();
         }
 
-        private static IEnumerable<string> ProcessBINPackedLinkedFile(string linkedString)
+        private static IEnumerable<string> ProcessBINPackedLinkedFile(string linkedString, ILog logger)
         {
             List<string> strings = new List<string>();
             string stringToProcess = linkedString;
+
+            strings.Add(linkedString);
 
             try
             {
@@ -220,7 +230,7 @@ namespace Obsidian.Utils
             }
             catch (Exception excp)
             {
-                strings.Add(linkedString);
+                Logging.LogException(logger, "Error unpacking a BIN linked file string: " + linkedString, excp);
             }
 
             return strings.AsEnumerable();

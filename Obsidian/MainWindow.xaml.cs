@@ -18,6 +18,7 @@ using Newtonsoft.Json.Linq;
 using Fantome.Libraries.League.Helpers.Cryptography;
 using System.Text;
 using MaterialDesignThemes.Wpf;
+using Obsidian.Preview;
 
 namespace Obsidian
 {
@@ -31,6 +32,7 @@ namespace Obsidian
         public WADFile Wad { get; set; }
         public WADEntry CurrentlySelectedEntry { get; set; }
         public static Dictionary<ulong, string> StringDictionary { get; set; } = new Dictionary<ulong, string>();
+        private PreviewHandler previewHandler;
 
         public MainWindow()
         {
@@ -51,7 +53,12 @@ namespace Obsidian
 
             InitializeComponent();
             Logger.Info("Initialized Window");
+
+            this.previewHandler = new PreviewHandler(this, this.PreviewViewport3D, this.previewModelGroup, this.previewNameLabel, this.previewTypeLabel, this.previewTextureComboBox,
+                this.previewMeshesComboBox, this.previewCamera, this.previewStackPanel, this.previewImage, this.previewExpander);
+
         }
+
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
@@ -60,6 +67,7 @@ namespace Obsidian
 
         private void datagridWadEntries_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
         {
+
             if (this.datagridWadEntries.SelectedItem is WADEntry entry)
             {
                 this.menuRemove.IsEnabled = true;
@@ -67,6 +75,7 @@ namespace Obsidian
                 {
                     this.CurrentlySelectedEntry = entry;
                     this.menuModifyData.IsEnabled = true;
+                    this.previewHandler.Emit(entry);
                 }
                 else
                 {
@@ -433,6 +442,7 @@ namespace Obsidian
                 }
             }
 
+            this.previewExpander.IsEnabled = true;
             this.menuSave.IsEnabled = true;
             this.menuImportHashtable.IsEnabled = true;
             this.menuExportHashtable.IsEnabled = true;
@@ -498,6 +508,7 @@ namespace Obsidian
                         Logging.LogException(Logger, "Failed to Generate WAD String Dictionary", excp);
                     }
                 }
+                this.previewExpander.IsEnabled = true;
 
                 this.menuSave.IsEnabled = true;
                 this.menuImportHashtable.IsEnabled = true;
@@ -625,6 +636,7 @@ namespace Obsidian
             {
                 this.Wad?.Dispose();
                 this.Wad = new WADFile(filePath);
+
             }
             catch (Exception excp)
             {
@@ -646,6 +658,14 @@ namespace Obsidian
                 }
             }
 
+            this.previewExpander.IsEnabled = true;
+
+            this.previewHandler.Clear();
+            if (this.previewExpander.IsExpanded)
+            {
+                this.previewExpander.IsExpanded = false;
+            }
+
             this.menuSave.IsEnabled = true;
             this.menuImportHashtable.IsEnabled = true;
             this.menuExportHashtable.IsEnabled = true;
@@ -657,6 +677,21 @@ namespace Obsidian
             this.datagridWadEntries.ItemsSource = this.Wad.Entries;
 
             Logger.Info("Opened WAD File: " + filePath);
+        }
+
+
+        private void DatagridWadEntries_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            WADEntry selectedItem = (WADEntry)this.datagridWadEntries.SelectedItem;
+            if(StringDictionary.ContainsKey(selectedItem.XXHash))
+            {
+                string entryString = StringDictionary[selectedItem.XXHash];
+
+                if(entryString.EndsWith(".dds", StringComparison.OrdinalIgnoreCase))
+                {
+                    this.previewHandler.PreSelect = new Tuple<string, ulong>(entryString, selectedItem.XXHash);
+                }
+            }
         }
     }
 }
