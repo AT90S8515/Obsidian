@@ -515,8 +515,11 @@ namespace Obsidian.Preview
                         }
                     }
 
-                    var texturesMap = new Dictionary<string, WADEntry>();
-                    if (foundTexture) texturesMap.Add(texturePath, GetWADEntryByPath(texturePath));
+                    Dictionary<string, WADEntry> texturesMap = new Dictionary<string, WADEntry>();
+                    if (foundTexture)
+                    {
+                        texturesMap.Add(texturePath, GetWADEntryByPath(texturePath));
+                    }
 
                     return new PreviewSimpleSkinInfoHolder(GetWADEntryByPath(namePath), GetWADEntryByPath(sklPath), texturesMap);
                 }
